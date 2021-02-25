@@ -1,0 +1,13 @@
+{
+	"width": 8,
+	"height": 8,
+	"num_ants": 3,
+	"delta_tau": 0.9,
+	"delta_food": 1,
+	"evaporation_factor": 0.5,
+	"colony_pos": [ 3, 3 ],
+	"food": {
+		"quantity": 100,
+		"position": [ 4, 6 ]
+	}
+}
