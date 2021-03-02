@@ -53,7 +53,7 @@ def choose_next_move(data, board, ants, ant):
     delta_food = data['delta_food']
     delta_tau = data['delta_tau']
 
-    # first checks for food, then for pheromones
+    # first checks if there's food nearby
     for i in range(0, 8):
         # iterating through all possible moves
         check_pos = [x + random_moves[i][0], y + random_moves[i][1]]
@@ -66,20 +66,20 @@ def choose_next_move(data, board, ants, ant):
             move_ant(board, width, delta_tau, ant, check_pos)
             return
 
+    # if no food is found, checks nearby tiles' pheromones
     for i in range(0, 8):
         check_pos = [x + random_moves[i][0], y + random_moves[i][1]]
         if not check_tile_exists(width, height, check_pos):
             continue
         if not check_tile_vacant(ants, check_pos):
             continue
-        if check_tile_preferred(board, width, height, ant, check_pos):
+        if check_tile_preferred(board, width, height, food, delta_food, ant, check_pos):
             move_ant(board, width, delta_tau, ant, check_pos)
             return
     
     # if no preference exists, choose a random tile
     new_pos = move_at_random(x, y)
-    # the chosen tile cannot be the ant's previous position
-    while not check_tile_vacant(ants, new_pos) or not check_tile_exists(width, height, new_pos) or new_pos == ant['prev_position']:
+    while not check_tile_vacant(ants, new_pos) or not check_tile_exists(width, height, new_pos) or check_tile_was_previous(ant, new_pos):
         new_pos = move_at_random(x, y)
     move_ant(board, width, delta_tau, ant, new_pos)
 
@@ -88,6 +88,10 @@ def check_tile_exists(width, height, pos):
     if pos[0] not in range(0, width) or pos[1] not in range(0, height):
         return False
     return True
+
+#checks if the tile was the ant's previous position
+def check_tile_was_previous(ant, pos):
+    return pos == ant['prev_position']
 
 # checks if an ant is already on the tile
 def check_tile_vacant(ants, pos):
@@ -104,13 +108,13 @@ def check_tile_has_food(food, delta_food, ant, pos):
     return False
 
 # checks for pheromones
-def check_tile_preferred(board, width, height, ant, pos):
+def check_tile_preferred(board, width, height, food, delta_food, ant, pos):
     # converts the 'x' and 'y' coordinates to the corresponding index of the board list
     index = width * pos[1] + pos[0]
     if index >= width * height:
         return False
 
-    if pos == ant['prev_position']:
+    if not check_tile_has_food(food, delta_food, ant, pos) and check_tile_was_previous(ant, pos):
         return False
 
     if not ant['carries_food']:
@@ -128,13 +132,13 @@ def print_output(ants, board):
     # copies ants to a new list so the 'prev_position' key can be removed
     for ant in ants:
         list_ants.append(ant.copy())
-    for ant in list_ants:
-        del ant['prev_position']
+    # for ant in list_ants:
+    #     del ant['prev_position']
 
     # connects the new ants list with the board list
     dict_for_print = dict.fromkeys(('ants', 'board'))
     dict_for_print['ants'] = list_ants
-    dict_for_print['board'] = board
+    # dict_for_print['board'] = board
     print(json.dumps(dict_for_print))
 
 # the function to be run
@@ -175,5 +179,10 @@ def run(input_path):
                 ant['carries_food'] = False
         decay(board, evaporation_factor)
         iterations += 1
+        # print_output(ants, board)
+
+    # while not all_ants_returned:
+
+
     print_output(ants, board)
     print(f'all ants returned after {iterations} round(s).')
