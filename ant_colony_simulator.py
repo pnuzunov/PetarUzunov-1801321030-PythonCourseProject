@@ -45,8 +45,10 @@ def move_ant(board, width, delta_tau, ant, new_pos):
 
 # ant chooses its next move
 def choose_next_move(data, board, ants, ant):
+
     x = ant['position'][0]
     y = ant['position'][1]
+    colony_pos = data['colony_pos']
     width = data['width']
     height = data['height']
     food = data['food']
@@ -59,7 +61,7 @@ def choose_next_move(data, board, ants, ant):
         check_pos = [x + random_moves[i][0], y + random_moves[i][1]]
         if not check_tile_exists(width, height, check_pos):
             continue
-        if not check_tile_vacant(ants, check_pos):
+        if not check_tile_vacant(ants, colony_pos, check_pos):
             continue
         if check_tile_has_food(food, delta_food, ant, check_pos):
             take_food(food, delta_food, ant)
@@ -71,7 +73,7 @@ def choose_next_move(data, board, ants, ant):
         check_pos = [x + random_moves[i][0], y + random_moves[i][1]]
         if not check_tile_exists(width, height, check_pos):
             continue
-        if not check_tile_vacant(ants, check_pos):
+        if not check_tile_vacant(ants, colony_pos, check_pos):
             continue
         if check_tile_preferred(board, width, height, food, delta_food, ant, check_pos):
             move_ant(board, width, delta_tau, ant, check_pos)
@@ -79,8 +81,14 @@ def choose_next_move(data, board, ants, ant):
     
     # if no preference exists, choose a random tile
     new_pos = move_at_random(x, y)
-    while not check_tile_vacant(ants, new_pos) or not check_tile_exists(width, height, new_pos) or check_tile_was_previous(ant, new_pos):
+    threshold = 100
+    loops = 0
+    while not check_tile_vacant(ants, colony_pos, new_pos) or not check_tile_exists(width, height, new_pos) or check_tile_was_previous(ant, new_pos):
+        # if the ant cannot choose a tile for whatever reason, skip an iteration 
+        if loops == threshold:
+            return
         new_pos = move_at_random(x, y)
+        loops += 1
     move_ant(board, width, delta_tau, ant, new_pos)
 
 # checks if the tile is out of bounds
@@ -94,9 +102,9 @@ def check_tile_was_previous(ant, pos):
     return pos == ant['prev_position']
 
 # checks if an ant is already on the tile
-def check_tile_vacant(ants, pos):
+def check_tile_vacant(ants, colony_pos, pos):
     for ant in ants:
-        if ant['position'] == pos:
+        if pos != colony_pos and ant['position'] == pos:
             return False
     return True
 
@@ -132,13 +140,13 @@ def print_output(ants, board):
     # copies ants to a new list so the 'prev_position' key can be removed
     for ant in ants:
         list_ants.append(ant.copy())
-    # for ant in list_ants:
-    #     del ant['prev_position']
+    for ant in list_ants:
+        del ant['prev_position']
 
     # connects the new ants list with the board list
     dict_for_print = dict.fromkeys(('ants', 'board'))
     dict_for_print['ants'] = list_ants
-    # dict_for_print['board'] = board
+    dict_for_print['board'] = board
     print(json.dumps(dict_for_print))
 
 # the function to be run
@@ -179,10 +187,20 @@ def run(input_path):
                 ant['carries_food'] = False
         decay(board, evaporation_factor)
         iterations += 1
-        # print_output(ants, board)
+        print_output(ants, board)
+    # print_output(ants, board)
+    # print('Food depleted.')
+    # input()
 
-    # while not all_ants_returned:
+    all_ants_returned = False
+    while not all_ants_returned:
+        all_ants_returned = True
+        for ant in ants:
+            if not ant['position'] == data['colony_pos']:
+                choose_next_move(data, board, ants, ant)
+                all_ants_returned = False
+        iterations += 1
+        print_output(ants, board)
 
-
-    print_output(ants, board)
-    print(f'all ants returned after {iterations} round(s).')
+    # print_output(ants, board)
+    print(f'All ants returned after {iterations} iterations(s).')
