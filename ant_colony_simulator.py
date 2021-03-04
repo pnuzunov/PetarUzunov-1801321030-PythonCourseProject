@@ -1,6 +1,6 @@
 import json
 import random
-
+import sys
 
 # attempts to read file from the given path
 def read_file(path):
@@ -57,7 +57,6 @@ def choose_next_move(data, board, ants, ant):
 
     # first checks if there's food nearby
     for i in range(0, 8):
-        # iterating through all possible moves
         check_pos = [x + random_moves[i][0], y + random_moves[i][1]]
         if not check_tile_exists(width, height, check_pos):
             continue
@@ -135,6 +134,7 @@ def check_tile_preferred(board, width, height, food, delta_food, ant, pos):
 
 # the output
 def print_output(ants, board):
+    sout = sys.stdout
     list_ants = []
 
     # copies ants to a new list so the 'prev_position' key can be removed
@@ -147,9 +147,10 @@ def print_output(ants, board):
     dict_for_print = dict.fromkeys(('ants', 'board'))
     dict_for_print['ants'] = list_ants
     dict_for_print['board'] = board
-    print(json.dumps(dict_for_print))
 
-# the function to be run
+    sout.write(json.dumps(dict_for_print))
+
+# the function that acts as an entry point
 def run(input_path):
 
     data = read_file(input_path)
@@ -188,9 +189,6 @@ def run(input_path):
         decay(board, evaporation_factor)
         iterations += 1
         print_output(ants, board)
-    # print_output(ants, board)
-    # print('Food depleted.')
-    # input()
 
     all_ants_returned = False
     while not all_ants_returned:
@@ -201,6 +199,3 @@ def run(input_path):
                 all_ants_returned = False
         iterations += 1
         print_output(ants, board)
-
-    # print_output(ants, board)
-    print(f'All ants returned after {iterations} iterations(s).')
