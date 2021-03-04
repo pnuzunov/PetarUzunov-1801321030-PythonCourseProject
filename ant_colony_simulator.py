@@ -23,8 +23,11 @@ def decay(board, evaporation_factor):
             tile['tau_b'] = 0.0
 
 def take_food(food, delta_food, ant):
-    food['quantity'] -= delta_food
-    ant['carries_food'] = True
+    if food['quantity'] >= delta_food:
+        food['quantity'] -= delta_food
+        ant['carries_food'] = True
+    else:
+        food['quantity'] = 0
 
 # ant chooses a random tile to move (if no preference exists)
 def move_at_random(x, y):
@@ -110,7 +113,7 @@ def check_tile_vacant(ants, colony_pos, pos):
 # checks if the tile has food
 def check_tile_has_food(food, delta_food, ant, pos):
     if not ant['carries_food']:
-        if food['position'] == pos:
+        if food['position'] == pos and food['quantity'] > 0:
             return True
     return False
 
