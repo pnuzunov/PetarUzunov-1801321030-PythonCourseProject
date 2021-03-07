@@ -153,7 +153,7 @@ def print_output(ants, board):
 
     sout.write(json.dumps(dict_for_print))
 
-# the function that acts as an entry point
+# the function that acts as the entry point
 def run(input_path):
 
     data = read_file(input_path)
@@ -182,9 +182,12 @@ def run(input_path):
     for i in range(0, data['width'] * data['height']):
         board.append({'tau_a': 0.0, 'tau_b': 0.0})
 
+    # the ants will gather food until its quantity reaches 0
     iterations = 0
     while data['food']['quantity'] > 0:
         for ant in ants:
+            # if an ant has food and has found its way back to the colony, it will no longer carry food
+            # otherwise, keep looking for either food or the colony
             if not ant['position'] == data['colony_pos'] or not ant['carries_food']:
                 choose_next_move(data, board, ants, ant)
             else:
@@ -193,6 +196,7 @@ def run(input_path):
         iterations += 1
         print_output(ants, board)
 
+    # when there's no more food, make all ants return to the colony so the program has a nice finish
     all_ants_returned = False
     while not all_ants_returned:
         all_ants_returned = True
@@ -200,5 +204,7 @@ def run(input_path):
             if not ant['position'] == data['colony_pos']:
                 choose_next_move(data, board, ants, ant)
                 all_ants_returned = False
+            elif ant['carries_food']:
+                ant['carries_food'] = False
         iterations += 1
         print_output(ants, board)
